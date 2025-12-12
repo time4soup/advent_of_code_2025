@@ -30,26 +30,34 @@ std::vector<std::vector<std::string>> getRanges (std::string& s) {
     return fullyParsed;
 }
 
+//checks if input ID is valid
+//invalid is repeating string of #s: 4949, 1111, 123123, 323232...
 bool checkInvalid(long long n) {
     std::string s{ std::to_string(n) };
-    return false;
+    std::regex re(R"(^(\d+)\1+$)"); //fix regex
+    std::cmatch match; //adjust length max
+    return std::regex_match(s, re);
 }
-//use regex to check nums
 
-//counts through all given ranges for invalid IDs
+//takes ranges of ID and sums the invalid IDs in those ranges
 long long getInvalidIdSum(std::vector<std::string> numStrings) {
     long long lowBound{ stoll(numStrings[0]) };
     long long highBound{ stoll(numStrings[1]) };
     long long sum{0};
 
+    std::cout << lowBound << " to " << highBound << '\n';
+
     for (long long i{lowBound}; i < highBound; i++) {
         if (checkInvalid(i)) {//and check for dupes
+            std::cout << i << " ";
             sum += i;
         }
     }
-    return 0;
+    std::cout << '\n';
+    return sum;
 }
 
+//reads from file, parses num ranges, and sums invalid IDs in those ranges
 int main() {
     std::ifstream inf{ "invalidRanges.txt" };
 
@@ -70,4 +78,3 @@ int main() {
 
     return 0;
 }
-//dont include dupes

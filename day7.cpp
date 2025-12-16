@@ -16,34 +16,33 @@ void storeRow(std::vector<std::vector<size_t>>& v, const std::string& s) {
     v.push_back(splitters);
 }
 
-int shootBeam(std::vector<std::vector<size_t>>& v, size_t start) {
-    std::vector<int> beam(v.front().size());
+std::vector<long long> shootBeam(std::vector<std::vector<size_t>>& v, size_t start) {
+    std::vector<long long> beam(141); //width of beam splitters
     std::size_t pos{};
-    int count{0};
     beam[start] = 1;
 
     for (int i{0}; i < v.size(); i++) {
         for (size_t j{0}; j < v[i].size(); j++) {
             pos = v[i][j];
-            if (beam[pos] == 1) {
+            if (beam[pos] >= 1) {
+                beam[pos+1] += beam[pos];
+                beam[pos-1] += beam[pos];
                 beam[pos] = 0;
-                beam[pos+1] = 1;
-                beam[pos-1] = 1;
-                count += 1;
             }
         }
-        std::cout << count << '\n';
     }
-    return count;
+    return beam;
 }
 
 int quantumBeamHelper(std::vector<std::vector<size_t>>& v, int row, size_t beamPos) {
-    if (row == v.size())
+    if (row >= v.size())
         return 0;
     int count{0};
+    std::cout << "beam: " << beamPos << ", row: " << row << '\n';
     for (int i{0}; i < v[row].size(); i++) {
         if (beamPos == v[row][i]) {
-            count += 2;
+            std::cout << "beam hit at " << beamPos << " in row " << row << '\n';
+            count += 1;
             count += quantumBeamHelper(v, row+1, beamPos+1);
             count += quantumBeamHelper(v, row+1, beamPos-1);
         }
@@ -52,11 +51,12 @@ int quantumBeamHelper(std::vector<std::vector<size_t>>& v, int row, size_t beamP
 }
 
 int quantumBeam(std::vector<std::vector<size_t>>& v, size_t start) {
-    int count{0};
+    int count{1};
     size_t row{0};
+    std::cout << "beam: " << start << ", row: " << row << '\n';
     for (int i{0}; i < v[row].size(); i++) {
         if (start == v[row][i]) {
-            count += 2;
+            count += 1;
             count += quantumBeamHelper(v, row+1, start+1);
             count += quantumBeamHelper(v, row+1, start-1);
         }
@@ -78,15 +78,16 @@ int main() {
         storeRow(beamMap, rawText);
     }
 
-    int splits{quantumBeam(beamMap, start)};
-    std::cout << "splits: " << splits << '\n';
+    std::vector<long long> beams{shootBeam(beamMap, start)};
 
-    // for (int i{0}; i < beamMap.size(); i++) {
-    //     for (int j{0}; j < beamMap[i].size(); j++) {
-    //         std::cout << beamMap[i][j] << ' ';
-    //     }
-    //     std::cout << '\n';
-    // }
+    long long count{0};
+    std::cout << "final possible beam positions: \n";
+    for (int i{0}; i < beams.size(); i++) {
+        count += beams[i];
+        std::cout << beams[i] << ",";
+    }
+    std::cout << '\n';
+    std::cout << "total count: " << count << '\n';
 
     return 0;
 

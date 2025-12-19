@@ -4,17 +4,24 @@
 #include <fstream>
 #include <cmath>
 
+int JUNCTION_BOX_COUNT {0};
+
 struct JunctionBox{
-    int id{}; //setup id counti
+    int id{JUNCTION_BOX_COUNT};
     int posX{};
     int posY{};
     int posZ{};
-    int FirstConnectionId{};
-    int SecondConnectionId{};
+    std::vector<int> ConnectionIds{};
 };
+
+std::ostream& operator<<(std::ostream& out, const JunctionBox& box) {
+    out << box.id << " @ " << box.posX << "," << box.posY << "," << box.posZ << '\n';
+    return out;
+}
 
 JunctionBox parseText(const std::string& s, const std::string& delimitter) {
     JunctionBox junctionBox{};
+    JUNCTION_BOX_COUNT += 1;
     std::vector<std::string::size_type> foundSeperators{};
     std::string::size_type searchPos{0};
     std::string::size_type foundPos{0};
@@ -32,19 +39,63 @@ JunctionBox parseText(const std::string& s, const std::string& delimitter) {
     return junctionBox;
 }
 
-double distance(JunctionBox& box1, JunctionBox& box2) {
+double distance(const JunctionBox& box1, const JunctionBox& box2) {
     double deltaX{ fabs(box1.posX - box2.posX) };
     double deltaY{ fabs(box1.posY - box2.posY) };
     double deltaZ{ fabs(box1.posZ - box2.posZ) };
     return sqrt(pow(deltaX, 2) + pow(deltaY, 2) + pow(deltaZ, 2));
 }
 
-//getClosest()
-//cycles through all junctionBox pairs
-////for i in range junctionBoxes
-////compare i and i+1 through junctionBoxes.size()
-//keep track of closest
-////must not already be connected
+//returns 1 if sharing circuit, or 0 if not
+bool checkConnected(std::vector<JunctionBox>& boxes, int id1, int id2) {
+    if (id1 == -1 || id2 == -1) {
+        std::cerr << "checking invalid boxes with id '-1'\n";
+        return -1;
+    } 
+    JunctionBox box1{ boxes[id1] };
+    JunctionBox box2{ boxes[id2] };
+
+    for (int i{0}; i < box1.ConnectionIds.size(); i++) {
+        if (box1.ConnectionIds[i] == id2) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void connectBoxes(std::vector<JunctionBox>& boxes, int id1, int id2) {
+    if (id1 == -1 || id2 == -1) {
+        std::cerr << "linking invalid boxes with id '-1'\n";
+        return;
+    }
+    JunctionBox box1{ boxes[id1] };
+    JunctionBox box2{ boxes[id2] };
+
+    box1.ConnectionIds.push_back(id2);
+    box2.ConnectionIds.push_back(id1);
+}
+
+void getClosest(std::vector<JunctionBox> boxes) {
+    double closestDist{INFINITY};
+    int closestId1{-1};
+    int closestId2{-1};
+    double dist{0.0};
+
+    for (int i{0}; i < boxes.size(); i++) {
+        JunctionBox box1{ boxes[i] };
+        for (int j{i+1}; j < boxes.size(); j++) {
+            JunctionBox box2{ boxes[j] };
+            dist = distance(box1, box2);
+            if (dist < closestDist && !checkConnected(boxes, i, j)) {
+                closestDist = dist;
+                closestId1 = i;
+                closestId2 = j;
+            }
+        }
+    }
+    connectBoxes(boxes, closestId1, closestId2);
+    std::cout << "connected boxes " << closestId1 << " and " << closestId2 << '\n';
+}
 
 int main() {
     std::ifstream inf("junctionBoxes.txt");
@@ -60,10 +111,16 @@ int main() {
     }
 
     for (int i{0}; i < junctionBoxes.size(); i++) {
-        std::cout << junctionBoxes[i].posX << "," << junctionBoxes[i].posY << "," << junctionBoxes[i].posZ << '\n';
+        std::cout << junctionBoxes[i];
     }
-    std::cout << "distance: " << distance(junctionBoxes[0], junctionBoxes[1]);
+
+    for (int i{0}; i < 1000; i++) { //goal to connect closest 1000 boxes
+        getClosest(junctionBoxes);
+    }
+    std::cout << "distance: " << distance(junctionBoxes[424], junctionBoxes[712]) << '\n';
+    std::cout << "size: " << junctionBoxes.size() << '\n';
 
     return 0;
 }
-//set junctionBox IDs
+
+

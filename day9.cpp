@@ -57,6 +57,7 @@ std::vector<long long> getRectPosition(std::vector<long long>& rectP1, std::vect
 
 bool checkIntersection(Line& l1, Line& l2) {
     std::vector<long long> IntersectCoords(2);
+    std::vector<long long> helpercoords(2);
     Line verticalLine;
     Line horizontalLine;
 
@@ -69,12 +70,29 @@ bool checkIntersection(Line& l1, Line& l2) {
     }
     IntersectCoords = {verticalLine.p1[0], horizontalLine.p1[1]};
 
-    if (!(IntersectCoords[0] < horizontalLine.p1[0] && IntersectCoords[0] > horizontalLine.p2[0]) && !(IntersectCoords[0] > horizontalLine.p1[0] && IntersectCoords[0] < horizontalLine.p2[0])) {
+    if (verticalLine.p1[1] > verticalLine.p2[1]) {
+        helpercoords = verticalLine.p1;
+        verticalLine.p1 = verticalLine.p2;
+        verticalLine.p2 = helpercoords;
+    }
+    if (horizontalLine.p1[0] > horizontalLine.p2[0]) {
+        helpercoords = horizontalLine.p1;
+        horizontalLine.p1 = horizontalLine.p2;
+        horizontalLine.p2 = helpercoords;
+    }
+
+    if (IntersectCoords[0] < horizontalLine.p1[0] || horizontalLine.p2[0] < IntersectCoords[0]) {
+        // std::cout << "no intersection (" << horizontalLine.p1[0] << ","<<horizontalLine.p1[1] << "),(" << horizontalLine.p2[0] << "," << horizontalLine.p2[1] << ") intersects (" << verticalLine.p1[0] << "," << verticalLine.p1[1] << "),(" << verticalLine.p2[0] << ","<<verticalLine.p2[1] << ")\n";
         return false;
     }
-    if (!(IntersectCoords[1] < verticalLine.p1[1] && IntersectCoords[1] > verticalLine.p2[1]) && !(IntersectCoords[1] > verticalLine.p1[1] && IntersectCoords[1] < verticalLine.p2[1])) {
+    if (IntersectCoords[1] < verticalLine.p1[1] || verticalLine.p2[1] < IntersectCoords[1]) {
+        // std::cout << "no intersection (" << horizontalLine.p1[0] << ","<<horizontalLine.p1[1] << "),(" << horizontalLine.p2[0] << "," << horizontalLine.p2[1] << ") intersects (" << verticalLine.p1[0] << "," << verticalLine.p1[1] << "),(" << verticalLine.p2[0] << ","<<verticalLine.p2[1] << ")\n";
         return false;
     }
+    // if (horizontalLine.p1 == verticalLine.p1 || horizontalLine.p1 == verticalLine.p2 || horizontalLine.p2 == verticalLine.p1 || horizontalLine.p2 == verticalLine.p2) {
+    //     return false;
+    // }
+    std::cout << "intersection (" << horizontalLine.p1[0] << ","<<horizontalLine.p1[1] << "),(" << horizontalLine.p2[0] << "," << horizontalLine.p2[1] << ") intersects (" << verticalLine.p1[0] << "," << verticalLine.p1[1] << "),(" << verticalLine.p2[0] << ","<<verticalLine.p2[1] << ")\n";
     return true;
 }
 
@@ -91,13 +109,13 @@ bool validateRectangle(std::vector<Line>& boundingLines, std::vector<long long>&
         if (boundingLine.direction() == 'v') {
             rectLine1.p1 = {rectPosition};
             rectLine1.p2 = {rectPosition[0]+width, rectPosition[1]};
-            rectLine2.p1 = {rectPosition[0], rectPosition[1]-height};
-            rectLine2.p2 = {rectPosition[0]+width, rectPosition[1]-height};
+            rectLine2.p1 = {rectPosition[0], rectPosition[1]+height};
+            rectLine2.p2 = {rectPosition[0]+width, rectPosition[1]+height};
         } else {
             rectLine1.p1 = {rectPosition};
-            rectLine1.p2 = {rectPosition[0], rectPosition[1]-height};
+            rectLine1.p2 = {rectPosition[0], rectPosition[1]+height};
             rectLine2.p1 = {rectPosition[0]+width, rectPosition[1]};
-            rectLine2.p2 = {rectPosition[0]+width, rectPosition[1]-height};
+            rectLine2.p2 = {rectPosition[0]+width, rectPosition[1]+height};
         }
 
         if (checkIntersection(boundingLine, rectLine1) || checkIntersection(boundingLine, rectLine2))
@@ -137,12 +155,12 @@ int main() {
 
     long long maxArea{0};
     long long currentArea{};
-    for (int i{0}; i < tileLocations.size(); i++) {
-        for (int j{i+1}; j < tileLocations.size(); j++) {
+    for (int i{0}; i < tileLocations.size(); i++) { //i{0}, i < tileLocations.size()
+        for (int j{i+1}; j < tileLocations.size(); j++) { // j{i+1}, j < tilelocations.size()
             currentArea = getArea(tileLocations[i], tileLocations[j]);
             if (currentArea > maxArea && validateRectangle(tileLines, tileLocations[i], tileLocations[j])) {
                 maxArea = currentArea;
-                std::cout << "(" << tileLocations[i][0] << "," << tileLocations[i][1] << ") (" << tileLocations[j][0] << "," << tileLocations[j][1] << "): " << currentArea << " is new max\n";
+                std::cout << "i:" << i << " j:" << j << " (" << tileLocations[i][0] << "," << tileLocations[i][1] << ") (" << tileLocations[j][0] << "," << tileLocations[j][1] << "): " << currentArea << " is new max\n";
             }
         }
     }
@@ -150,5 +168,6 @@ int main() {
     std::cout << "max area: " << maxArea << '\n';
     std::cout << "size: " << tileLocations.size() << '\n';
 }
-
+//334190610 too low
+//2440276020 too high
 //3750797226 too high
